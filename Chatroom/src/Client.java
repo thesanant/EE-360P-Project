@@ -42,7 +42,6 @@ class Input implements Runnable{
 				String message = in.readUTF();
 				System.out.println(message);
 			} catch(IOException e){
-				e.printStackTrace();
 			}
 		}
 	}

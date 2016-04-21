@@ -47,7 +47,6 @@ class Users implements Runnable{
 		try{
 			name = in.readUTF();
 		} catch(IOException e){
-			e.printStackTrace();
 		}
 		while(true){
 			try{
@@ -58,7 +57,6 @@ class Users implements Runnable{
 					}
 				}
 			} catch(IOException e){
-				e.printStackTrace();
 			}
 		}
 	}
