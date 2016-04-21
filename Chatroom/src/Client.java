@@ -10,7 +10,7 @@ public class Client {
 	
 	public static void main(String[] args) throws Exception{
 		System.out.println("Connecting...");
-		socket = new Socket("localhost", 7777);
+		socket = new Socket("10.145.177.246", 7777);
 		System.out.println("Connection successful");
 		in = new DataInputStream(socket.getInputStream());
 		out = new DataOutputStream(socket.getOutputStream());
