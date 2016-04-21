@@ -20,7 +20,7 @@ public class Server{
 				out = new DataOutputStream(socket.getOutputStream());
 				in = new DataInputStream(socket.getInputStream());
 				if(user[i] == null){
-					user[i] = new Users(out,in,user);
+					user[i] = new Users(out,in,user, i);
 					Thread thread = new Thread(user[i]);
 					thread.start();
 					break;
@@ -36,17 +36,21 @@ class Users implements Runnable{
 	DataInputStream in;
 	Users[] user = new Users[10];
 	String name;
+	int myNum;
 
-	public Users(DataOutputStream out, DataInputStream in, Users[] user){
+	public Users(DataOutputStream out, DataInputStream in, Users[] user, int myNum){
 		this.out = out;
 		this.in = in;
 		this.user = user;
+		this.myNum = myNum;
 	}
 
 	public void run(){
 		try{
 			name = in.readUTF();
 		} catch(IOException e){
+			user[myNum] = null;
+			return;
 		}
 		while(true){
 			try{
@@ -57,6 +61,8 @@ class Users implements Runnable{
 					}
 				}
 			} catch(IOException e){
+				user[myNum] = null;
+				return;
 			}
 		}
 	}
