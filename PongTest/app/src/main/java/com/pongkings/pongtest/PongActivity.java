@@ -49,17 +49,19 @@ public class PongActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onStop() {
+        super.onStop();
         gp.setClientRunning(false);
         try {
             client.getSocket().close();
-        }catch(IOException e){}
+        }catch(IOException e){
+            e.printStackTrace();
+        }
     }
 
     @Override
-    protected void onResume(){
-        super.onResume();
+    protected void onRestart(){
+        super.onRestart();
         new ClientAsync().execute(gp);
     }
 

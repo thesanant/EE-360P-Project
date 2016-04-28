@@ -27,12 +27,14 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
     public static final int HEIGHT = 480;
     public static final int MOVESPEED = -5;
     private long smokeStartTime;
+    private long enemySmokeStartTime;
     private long missileStartTime;
     private MainThread thread;
     private Background bg;
     private Player player;
     private EnemyPlayer enemyPlayer;
     private ArrayList<Smokepuff> smoke;
+    private ArrayList<Smokepuff> enemySmoke;
     private ArrayList<Missile> missiles;
     private ArrayList<TopBorder> topborder;
     private ArrayList<BotBorder> botborder;
@@ -42,20 +44,22 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
     private boolean topDown = true;
     private boolean botDown = true;
     private boolean newGameCreated;
+    private boolean newEnemyCreated;
     private int deviceWidth;
 
     //increase to slow down difficulty progression, decrease to speed up difficulty progression
     private int progressDenom = 20;
 
     private Explosion explosion;
-    private Explosion explosion2;
+    private Explosion enemyExplosion;
     private long startReset;
+    private long enemyStartReset;
     private boolean reset;
     private boolean dissapear;
     private boolean enemyDissapear;
     private boolean started;
     private int best;
-    private boolean reset2;
+    private boolean enemyReset;
     private boolean clientRunning;
 
     private Client myClient;
@@ -156,10 +160,12 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
         enemyPlayer = new EnemyPlayer(BitmapFactory.decodeResource(getResources(), R.drawable.helicopter2a),65,25,3,100);
         player = new Player(BitmapFactory.decodeResource(getResources(), R.drawable.helicopter), 65, 25, 3);
         smoke = new ArrayList<Smokepuff>();
+        enemySmoke = new ArrayList<Smokepuff>();
         missiles = new ArrayList<Missile>();
         topborder = new ArrayList<TopBorder>();
         botborder = new ArrayList<BotBorder>();
         smokeStartTime=  System.nanoTime();
+        enemySmokeStartTime = System.nanoTime();
         missileStartTime = System.nanoTime();
 
         thread = new MainThread(getHolder(), this);
@@ -220,7 +226,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             }
 
             bg.update();
-            enemyPlayer.update();
             player.update();
 
 
@@ -292,14 +297,6 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 //                    break;
 //                }
             }
-            for(int i = 0; i<missiles.size();i++){
-                if(collision(missiles.get(i),enemyPlayer)){
-                    enemyPlayer.setPlaying(false);
-                    enemyDissapear = true;
-                    break;
-                }
-                enemyDissapear = false;
-            }
 
             //add smoke puffs on timer
             long elapsed = (System.nanoTime() - smokeStartTime)/1000000;
@@ -339,11 +336,125 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 
 
         }
-        if(!enemyPlayer.getPlaying()){
-            explosion2 = new Explosion(BitmapFactory.decodeResource(getResources(), R.drawable.explosion), enemyPlayer.getX(),
-                    enemyPlayer.getY()-30, 100, 100, 25);
-            enemyPlayer.setPlaying(true);
-            enemyDissapear = true;
+        if(enemyPlayer.getPlaying()) {
+
+            if(botborder.isEmpty())
+            {
+                enemyPlayer.setPlaying(false);
+                return;
+            }
+            if(topborder.isEmpty())
+            {
+                enemyPlayer.setPlaying(false);
+                return;
+            }
+
+          //  bg.update();
+            enemyPlayer.update();
+
+            //check bottom border collision
+            for(int i = 0; i<botborder.size(); i++)
+            {
+                if(collision(botborder.get(i), enemyPlayer))
+                    enemyPlayer.setPlaying(false);
+            }
+
+            //check top border collision
+            for(int i = 0; i <topborder.size(); i++)
+            {
+                if(collision(topborder.get(i),enemyPlayer))
+                    enemyPlayer.setPlaying(false);
+            }
+
+            //update top border
+            this.updateTopBorder();
+
+            //udpate bottom border
+            this.updateBottomBorder();
+
+//            //add missiles on timer
+//            long missileElapsed = (System.nanoTime()-missileStartTime)/1000000;
+//            if(missileElapsed >(2000 - player.getScore()/12)){
+//
+//                //first missile always goes down the middle
+//                if(missiles.size()==0)
+//                {
+//                    missiles.add(new Missile(BitmapFactory.decodeResource(getResources(),R.drawable.
+//                            missile),WIDTH + 10, HEIGHT/2, 45, 15, player.getScore(), 13));
+//                }
+//                else
+//                {
+//                    missiles.add(new Missile(BitmapFactory.decodeResource(getResources(),R.drawable.missile),
+//                            WIDTH+10, (int)(rand.nextDouble()*(HEIGHT - (maxBorderHeight * 2))+maxBorderHeight),45,15, player.getScore(),13));
+//                }
+//
+//                //reset timer
+//                missileStartTime = System.nanoTime();
+//            }
+            //loop through every missile and check collision and remove
+            for(int i = 0; i<missiles.size();i++)
+            {
+//                //update missile
+//                missiles.get(i).update(getWidth());
+
+                if(collision(missiles.get(i),enemyPlayer))
+                {
+                    //     missiles.remove(i);
+                    enemyPlayer.setPlaying(false);
+                    break;
+                }
+
+//                //remove missile if it is way off the screen
+//                if(missiles.get(i).getX()<-100)
+//                {
+//                    missiles.remove(i);
+//                    break;
+//                }
+            }
+
+            //add smoke puffs on timer
+            long elapsed = (System.nanoTime() - enemySmokeStartTime)/1000000;
+            if(elapsed > 120){
+                enemySmoke.add(new Smokepuff(enemyPlayer.getX(), enemyPlayer.getY()+10));
+                enemySmokeStartTime = System.nanoTime();
+            }
+
+            for(int i = 0; i<enemySmoke.size();i++)
+            {
+                enemySmoke.get(i).update();
+                if(enemySmoke.get(i).getX()<-10)
+                {
+                    enemySmoke.remove(i);
+                }
+            }
+        }
+        else{
+            enemyPlayer.resetDY();
+            if(!enemyReset)
+            {
+                newEnemyCreated = false;
+               enemyStartReset = System.nanoTime();
+               enemyReset = true;
+                enemyDissapear = true;
+                enemyExplosion = new Explosion(BitmapFactory.decodeResource(getResources(),R.drawable.explosion),enemyPlayer.getX(),
+                        player.getY()-30, 100, 100, 25);
+            }
+
+            enemyExplosion.update();
+            long resetElapsed = (System.nanoTime()-enemyStartReset)/1000000;
+
+            if(resetElapsed > 2500 && !newEnemyCreated)
+            {
+                //newGame();
+                enemyDissapear = false;
+                enemySmoke.clear();
+                enemyPlayer.resetDY();
+                enemyPlayer.setY(HEIGHT/2);
+                newEnemyCreated = true;
+                enemyReset = true;
+            }
+
+
         }
 
     }
