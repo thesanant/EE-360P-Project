@@ -17,6 +17,10 @@ public class Client {
     static DataInputStream in;
     GamePanel myGamePanel;
 
+    public DataOutputStream getDataOutputStream(){
+        return out;
+    }
+
 
     public Client(GamePanel gp) throws Exception{
         myGamePanel = gp;

@@ -58,6 +58,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
     private boolean dissapear;
     private boolean enemyDissapear;
     private boolean started;
+    private boolean enemyStarted;
     private int best;
     private boolean enemyReset;
     private boolean clientRunning;
@@ -197,6 +198,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             {
 
                 if(!started)started = true;
+                if(!enemyStarted)enemyStarted = true;
                 reset = false;
                 player.setUp(true);
             }
@@ -367,10 +369,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             }
 
             //update top border
-            this.updateTopBorder();
+          //  this.updateTopBorder();
 
             //udpate bottom border
-            this.updateBottomBorder();
+         //   this.updateBottomBorder();
 
 //            //add missiles on timer
 //            long missileElapsed = (System.nanoTime()-missileStartTime)/1000000;
@@ -437,7 +439,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
                enemyReset = true;
                 enemyDissapear = true;
                 enemyExplosion = new Explosion(BitmapFactory.decodeResource(getResources(),R.drawable.explosion),enemyPlayer.getX(),
-                        player.getY()-30, 100, 100, 25);
+                        enemyPlayer.getY()-30, 100, 100, 25);
             }
 
             enemyExplosion.update();
@@ -451,7 +453,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
                 enemyPlayer.resetDY();
                 enemyPlayer.setY(HEIGHT/2);
                 newEnemyCreated = true;
-                enemyReset = true;
+                enemyReset = false;
+                enemyPlayer.setPlaying(true);
+                enemyPlayer.setUp(true);
             }
 
 
@@ -488,6 +492,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             {
                 sp.draw(canvas);
             }
+            for(Smokepuff sp: enemySmoke){
+                sp.draw(canvas);
+            }
             //draw missiles
             for(Missile m: missiles)
             {
@@ -510,6 +517,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             if(started)
             {
                 explosion.draw(canvas);
+            }
+            if(enemyStarted){
+                enemyExplosion.draw(canvas);
             }
             drawText(canvas);
             canvas.restoreToCount(savedState);

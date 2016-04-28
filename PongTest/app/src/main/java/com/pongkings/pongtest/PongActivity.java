@@ -53,6 +53,7 @@ public class PongActivity extends AppCompatActivity {
         super.onStop();
         gp.setClientRunning(false);
         try {
+            client.getDataOutputStream().flush();
             client.getSocket().close();
         }catch(IOException e){
             e.printStackTrace();
