@@ -1,16 +1,27 @@
 package com.pongkings.pongtest;
 
+import android.graphics.Point;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.app.Activity;
 import android.os.Bundle;
+import android.view.Display;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
 
+import java.io.IOException;
+
 
 public class PongActivity extends AppCompatActivity {
+    public GamePanel gp;
+
+    public static void setClient(Client client) {
+        PongActivity.client = client;
+    }
+
+    public static Client client;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,13 +33,37 @@ public class PongActivity extends AppCompatActivity {
         //set to full screen
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        setContentView(new GamePanel(this));
+        gp = new GamePanel(this, getWindowManager());
 
+        new ClientAsync().execute(gp);
+
+        setContentView(gp);
 
     }
 
+    public int getDeviceWidth(){
+        Display display = getWindowManager().getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        return size.x;
+    }
 
- /*   @Override
+    @Override
+    protected void onPause() {
+        super.onPause();
+        gp.setClientRunning(false);
+        try {
+            client.getSocket().close();
+        }catch(IOException e){}
+    }
+
+    @Override
+    protected void onResume(){
+        super.onResume();
+        new ClientAsync().execute(gp);
+    }
+
+    /*   @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(menu.menu_game, menu);

@@ -5,11 +5,17 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.Typeface;
+import android.view.Display;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -36,18 +42,27 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
     private boolean topDown = true;
     private boolean botDown = true;
     private boolean newGameCreated;
+    private int deviceWidth;
 
     //increase to slow down difficulty progression, decrease to speed up difficulty progression
     private int progressDenom = 20;
 
     private Explosion explosion;
+    private Explosion explosion2;
     private long startReset;
     private boolean reset;
     private boolean dissapear;
+    private boolean enemyDissapear;
     private boolean started;
     private int best;
+    private boolean reset2;
+    private boolean clientRunning;
 
     private Client myClient;
+
+    public Player getPlayer(){return player;}
+
+    public EnemyPlayer getEnemyPlayer() {return enemyPlayer;}
 
     public int getPlayerY(){
         return player.getY();
@@ -57,12 +72,46 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
         enemyPlayer.setY(newY);
     }
 
+    public void addMissile(Missile m){
+        missiles.add(m);
+    }
+
+    public int getMaxBorderHeight(){
+        return maxBorderHeight;
+    }
+
+    public ArrayList<Missile> getMissileList(){
+        return missiles;
+    }
+
+    public boolean getPlayerStatus(){
+        return player.getPlaying();
+    }
+
+    public void setDeviceWidth(int i){
+        deviceWidth = i;
+    }
+    public int getDeviceWidth(){
+       return deviceWidth;
+    }
+
+    public boolean getClientRunning(){return clientRunning;}
+    public void setClientRunning(boolean b){clientRunning = b;}
 
 
-    public GamePanel(Context context)
+
+
+    public GamePanel(Context context, WindowManager wm)
     {
         super(context);
 
+        setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
 
         //add the callback to the surfaceholder to intercept events
         getHolder().addCallback(this);
@@ -72,10 +121,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
         //make gamePanel focusable so it can handle events
         setFocusable(true);
 
-        //Create Client for communication
-        try {
-            myClient = new Client(this);
-        } catch(Exception e){}
+        Display display = wm.getDefaultDisplay();
+        Point size = new Point();
+        display.getSize(size);
+        setDeviceWidth(size.x);
 
     }
 
@@ -104,8 +153,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
     public void surfaceCreated(SurfaceHolder holder){
 
         bg = new Background(BitmapFactory.decodeResource(getResources(), R.drawable.grassbg1));
+        enemyPlayer = new EnemyPlayer(BitmapFactory.decodeResource(getResources(), R.drawable.helicopter2a),65,25,3,100);
         player = new Player(BitmapFactory.decodeResource(getResources(), R.drawable.helicopter), 65, 25, 3);
-        enemyPlayer = new EnemyPlayer(BitmapFactory.decodeResource(getResources(), R.drawable.helicopter),65,25,3,150);
         smoke = new ArrayList<Smokepuff>();
         missiles = new ArrayList<Missile>();
         topborder = new ArrayList<TopBorder>();
@@ -122,6 +171,14 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
     @Override
     public boolean onTouchEvent(MotionEvent event)
     {
+        setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                        | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                        | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                        | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION // hide nav bar
+                        | View.SYSTEM_UI_FLAG_FULLSCREEN // hide status bar
+                        | View.SYSTEM_UI_FLAG_IMMERSIVE);
+
         if(event.getAction()==MotionEvent.ACTION_DOWN){
             if(!player.getPlaying() && newGameCreated && reset)
             {
@@ -148,9 +205,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
         return super.onTouchEvent(event);
     }
 
-    public void update()
-
-    {
+    public void update() {
         if(player.getPlaying()) {
 
             if(botborder.isEmpty())
@@ -165,8 +220,9 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             }
 
             bg.update();
-            player.update();
             enemyPlayer.update();
+            player.update();
+
 
             //calculate the threshold of height the border can have based on the score
             //max and min border heart are updated, and the border switched direction when either max or
@@ -197,44 +253,52 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             //udpate bottom border
             this.updateBottomBorder();
 
-            //add missiles on timer
-            long missileElapsed = (System.nanoTime()-missileStartTime)/1000000;
-            if(missileElapsed >(2000 - player.getScore()/12)){
-
-
-                //first missile always goes down the middle
-                if(missiles.size()==0)
-                {
-                    missiles.add(new Missile(BitmapFactory.decodeResource(getResources(),R.drawable.
-                            missile),WIDTH + 10, HEIGHT/2, 45, 15, player.getScore(), 13));
-                }
-                else
-                {
-                    missiles.add(new Missile(BitmapFactory.decodeResource(getResources(),R.drawable.missile),
-                            WIDTH+10, (int)(rand.nextDouble()*(HEIGHT - (maxBorderHeight * 2))+maxBorderHeight),45,15, player.getScore(),13));
-                }
-
-                //reset timer
-                missileStartTime = System.nanoTime();
-            }
+//            //add missiles on timer
+//            long missileElapsed = (System.nanoTime()-missileStartTime)/1000000;
+//            if(missileElapsed >(2000 - player.getScore()/12)){
+//
+//                //first missile always goes down the middle
+//                if(missiles.size()==0)
+//                {
+//                    missiles.add(new Missile(BitmapFactory.decodeResource(getResources(),R.drawable.
+//                            missile),WIDTH + 10, HEIGHT/2, 45, 15, player.getScore(), 13));
+//                }
+//                else
+//                {
+//                    missiles.add(new Missile(BitmapFactory.decodeResource(getResources(),R.drawable.missile),
+//                            WIDTH+10, (int)(rand.nextDouble()*(HEIGHT - (maxBorderHeight * 2))+maxBorderHeight),45,15, player.getScore(),13));
+//                }
+//
+//                //reset timer
+//                missileStartTime = System.nanoTime();
+//            }
             //loop through every missile and check collision and remove
             for(int i = 0; i<missiles.size();i++)
             {
-                //update missile
-                missiles.get(i).update();
+//                //update missile
+//                missiles.get(i).update(getWidth());
 
                 if(collision(missiles.get(i),player))
                 {
-                    missiles.remove(i);
+               //     missiles.remove(i);
                     player.setPlaying(false);
                     break;
                 }
-                //remove missile if it is way off the screen
-                if(missiles.get(i).getX()<-100)
-                {
-                    missiles.remove(i);
+
+//                //remove missile if it is way off the screen
+//                if(missiles.get(i).getX()<-100)
+//                {
+//                    missiles.remove(i);
+//                    break;
+//                }
+            }
+            for(int i = 0; i<missiles.size();i++){
+                if(collision(missiles.get(i),enemyPlayer)){
+                    enemyPlayer.setPlaying(false);
+                    enemyDissapear = true;
                     break;
                 }
+                enemyDissapear = false;
             }
 
             //add smoke puffs on timer
@@ -275,6 +339,12 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 
 
         }
+        if(!enemyPlayer.getPlaying()){
+            explosion2 = new Explosion(BitmapFactory.decodeResource(getResources(), R.drawable.explosion), enemyPlayer.getX(),
+                    enemyPlayer.getY()-30, 100, 100, 25);
+            enemyPlayer.setPlaying(true);
+            enemyDissapear = true;
+        }
 
     }
     public boolean collision(GameObject a, GameObject b)
@@ -291,15 +361,16 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 
         final float scaleFactorX = getWidth()/(WIDTH*1.f);
         final float scaleFactorY = getHeight()/(HEIGHT*1.f);
-
         if(canvas!=null) {
             final int savedState = canvas.save();
             canvas.scale(scaleFactorX, scaleFactorY);
             super.draw(canvas);
             bg.draw(canvas);
+            if(!enemyDissapear) {
+                enemyPlayer.draw(canvas);
+            }
             if(!dissapear) {
                 player.draw(canvas);
-                enemyPlayer.draw(canvas);
             }
             //draw smokepuffs
             for(Smokepuff sp: smoke)
@@ -427,21 +498,18 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
         botborder.clear();
         topborder.clear();
 
-        missiles.clear();
+      //  missiles.clear();
         smoke.clear();
 
         minBorderHeight = 5;
         maxBorderHeight = 30;
 
+        if(player.getScore() > best){
+            best  = player.getScore();
+        }
         player.resetDY();
         player.resetScore();
         player.setY(HEIGHT/2);
-
-        if(player.getScore()>best)
-        {
-            best = player.getScore();
-
-        }
 
         //create initial borders
 
@@ -488,7 +556,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
         paint.setTextSize(30);
         paint.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         canvas.drawText("DISTANCE: " + (player.getScore()*3), 10, HEIGHT - 10, paint);
-        canvas.drawText("BEST: " + best, WIDTH - 215, HEIGHT - 10, paint);
+        canvas.drawText("BEST: " + best*3, WIDTH - 215, HEIGHT - 10, paint);
 
         if(!player.getPlaying()&&newGameCreated&&reset)
         {
