@@ -9,9 +9,6 @@ public class Server{
 	static DataOutputStream out;
 	static DataInputStream in;
 	static Users[] user = new Users[10];
-	
-	static int width1;
-	static int width2;
 
 	
 	public static void main(String[] args) throws Exception{
@@ -49,7 +46,6 @@ class Users implements Runnable{
 	Users[] user = new Users[10];
 	String name;
 	int myNum;
-	int width;
 
 
 	public Users(DataOutputStream out, DataInputStream in, Users[] user, int myNum){
@@ -60,14 +56,6 @@ class Users implements Runnable{
 	}
 
 	public void run(){
-		try{
-			String input = in.readUTF();
-			width = Integer.parseInt(input);
-			System.out.println(width);
-		} catch(IOException e){
-			user[myNum] = null;
-			return;
-		}
 		int i = 0;
 		if(myNum == 0){
 			i = 1;
@@ -92,38 +80,25 @@ class Users implements Runnable{
 
 class MissileControl implements Runnable{
 	long numMissiles = 0;
-	public long missileStartTime = 0;
 	Users[] user;
 	ArrayList<Integer> missileX = new ArrayList<Integer>();
 	ArrayList<Integer> missileX2 = new ArrayList<Integer>();
-	int width0 = 0;
-	int width1 = 0;
+	
 	public MissileControl(Users[] user){
-
 		this.user = user;
 	}
 
 	public void run(){
-		missileStartTime = System.nanoTime();
 		int count = 0;
 		Random rand = new Random();
 		
-		if(user[0] != null){
-			while(user[0].width <= 0){System.out.println("Stuck");}
-			width0 = user[0].width;
-		}
-		if(user[1] != null){				//PUT IN WHILE LOOP
-			width1 = user[1].width;
-		}
-		//Scanner sc = new Scanner(System.in);
-		//System.out.println(sc.nextLine());
 		while(true){
-			count += 1;
+			count ++;
        	 //add missiles on timer
-			long missileElapsed = (System.nanoTime() - missileStartTime);
+		 //long missileElapsed = (System.nanoTime() - missileStartTime);
        	 //System.out.println(missileElapsed + "\n");
        	 //if(missileElapsed > (2000 - count/12)){
-			if(count % 50000000 == 0){
+			if(count % 500000000 == 0){
        	 	//first missile always goes down the middle
 				if(numMissiles == 0){
 				//	boolean added = false;
@@ -132,12 +107,12 @@ class MissileControl implements Runnable{
                 	//speed is controlled for now
 						if(user[i] != null){
 							try{
-								if(width0>0 && i==0){
-									missileX.add(width0);
+								if(i==0){
+									missileX.add(856);
 									//added = true;
 								}
-								else if(width1>0 && i==1){
-									missileX2.add(width1);
+								else if(i==1){
+									missileX2.add(856);
 								}
 									user[i].out.writeUTF("First Missile:"+0);
 									System.out.println("First Missle FIRED!\n");
@@ -149,34 +124,32 @@ class MissileControl implements Runnable{
 					numMissiles++;
 				}
 				else{
-					int ronda = rand.nextInt() % 40;
 					double rando = rand.nextDouble();
 					//boolean added = false;
 					for(int i = 0; i < 2; i++){
 						if(user[i] != null){
 							try{
-								if(width0>0 && i==0){
-									missileX.add(width0);
+								if(i==0){
+									missileX.add(856);
 							//		added = true;
 								}
-								else if(width0>0 && i==1){
-									missileX2.add(width0);
+								else if(i==1){
+									missileX2.add(856);
 								}
 									user[i].out.writeUTF("New Missile:"+rando);
-									System.out.println("Missle FIRED!\n");
+									System.out.println("Missle FIRED! to user: " + i + "\n");
 							}catch(IOException e){
 								System.out.println("Exception\n");
 							}
 						}
 					}
 				}
-				missileStartTime = System.nanoTime();
 			}
-			if(count % 400000 == 0){
+			if(count % 4000000 == 0){
 				for(int i = 0; i < missileX.size(); i++){
 					int updateX = missileX.get(i)-6;
 					missileX.set(i, missileX.get(i)-(6));
-					if(missileX.get(i) < -100){
+					if(missileX.get(i) < -50){
 						missileX.remove(i);
 					}
 					//for(int j = 0; j < 2; j++){
