@@ -9,7 +9,6 @@ public class Server{
 	static DataOutputStream out;
 	static DataInputStream in;
 	static Users[] user = new Users[10];
-
 	
 	public static void main(String[] args) throws Exception{
 		System.out.println("Starting Server...");
@@ -18,8 +17,8 @@ public class Server{
 		boolean first = false;
 		while(true){
 			socket = serverSocket.accept();
+			System.out.println("Connection From: " + socket.getInetAddress());
 			for(int i = 0; i < 2; i++){
-				System.out.println("Connection From: " + socket.getInetAddress());
 				out = new DataOutputStream(socket.getOutputStream());
 				in = new DataInputStream(socket.getInputStream());
 				if(user[i] == null){
@@ -47,7 +46,6 @@ class Users implements Runnable{
 	String name;
 	int myNum;
 
-
 	public Users(DataOutputStream out, DataInputStream in, Users[] user, int myNum){
 		this.out = out;
 		this.in = in;
@@ -71,6 +69,7 @@ class Users implements Runnable{
 				}
 			//	}
 			} catch(IOException e){
+				System.out.println("User " + myNum + " DISCONNECTED");
 				user[myNum] = null;
 				return;
 			}
@@ -83,22 +82,22 @@ class MissileControl implements Runnable{
 	Users[] user;
 	ArrayList<Integer> missileX = new ArrayList<Integer>();
 	ArrayList<Integer> missileX2 = new ArrayList<Integer>();
-	
 	public MissileControl(Users[] user){
+
 		this.user = user;
 	}
 
 	public void run(){
 		int count = 0;
 		Random rand = new Random();
-		
+		//Scanner sc = new Scanner(System.in);
+		//System.out.println(sc.nextLine());
 		while(true){
-			count ++;
+			count += 1;
        	 //add missiles on timer
-		 //long missileElapsed = (System.nanoTime() - missileStartTime);
        	 //System.out.println(missileElapsed + "\n");
        	 //if(missileElapsed > (2000 - count/12)){
-			if(count % 500000000 == 0){
+			if(count % 250000000 == 0){
        	 	//first missile always goes down the middle
 				if(numMissiles == 0){
 				//	boolean added = false;
@@ -145,11 +144,11 @@ class MissileControl implements Runnable{
 					}
 				}
 			}
-			if(count % 4000000 == 0){
+			if(count % 2500000 == 0){
 				for(int i = 0; i < missileX.size(); i++){
 					int updateX = missileX.get(i)-6;
 					missileX.set(i, missileX.get(i)-(6));
-					if(missileX.get(i) < -50){
+					if(missileX.get(i) < -100){
 						missileX.remove(i);
 					}
 					//for(int j = 0; j < 2; j++){
