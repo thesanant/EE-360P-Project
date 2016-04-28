@@ -60,6 +60,15 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
     private boolean started;
     private boolean enemyStarted;
     private int best;
+
+    public boolean getEnemyReset() {
+        return enemyReset;
+    }
+
+    public void setEnemyReset(boolean enemyReset) {
+        this.enemyReset = enemyReset;
+    }
+
     private boolean enemyReset;
     private boolean clientRunning;
 
@@ -102,6 +111,14 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 
     public boolean getClientRunning(){return clientRunning;}
     public void setClientRunning(boolean b){clientRunning = b;}
+
+    public boolean getEnemyStarted(){return enemyStarted;}
+    public void setEnemyStarted(boolean b){enemyStarted = b;}
+
+    public boolean getNewEnemyCreated(){return newEnemyCreated;}
+    public void setNewEnemyCreated(boolean b){newEnemyCreated = b;}
+
+
 
 
 
@@ -191,14 +208,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             {
                 player.setPlaying(true);
                 player.setUp(true);
-                enemyPlayer.setPlaying(true);
-                enemyPlayer.setUp(true);
             }
             if(player.getPlaying())
             {
-
                 if(!started)started = true;
-                if(!enemyStarted)enemyStarted = true;
                 reset = false;
                 player.setUp(true);
             }
@@ -435,8 +448,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             if(!enemyReset)
             {
                 newEnemyCreated = false;
-               enemyStartReset = System.nanoTime();
-               enemyReset = true;
+                enemyStartReset = System.nanoTime();
+                enemyReset = true;
                 enemyDissapear = true;
                 enemyExplosion = new Explosion(BitmapFactory.decodeResource(getResources(),R.drawable.explosion),enemyPlayer.getX(),
                         enemyPlayer.getY()-30, 100, 100, 25);
@@ -447,15 +460,11 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
 
             if(resetElapsed > 2500 && !newEnemyCreated)
             {
-                //newGame();
                 enemyDissapear = false;
                 enemySmoke.clear();
                 enemyPlayer.resetDY();
                 enemyPlayer.setY(HEIGHT/2);
                 newEnemyCreated = true;
-                enemyReset = false;
-                enemyPlayer.setPlaying(true);
-                enemyPlayer.setUp(true);
             }
 
 
@@ -483,17 +492,17 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback
             bg.draw(canvas);
             if(!enemyDissapear) {
                 enemyPlayer.draw(canvas);
+                for(Smokepuff sp: enemySmoke){
+                    sp.draw(canvas);
+                }
             }
             if(!dissapear) {
                 player.draw(canvas);
-            }
-            //draw smokepuffs
-            for(Smokepuff sp: smoke)
-            {
-                sp.draw(canvas);
-            }
-            for(Smokepuff sp: enemySmoke){
-                sp.draw(canvas);
+                //draw smokepuffs
+                for(Smokepuff sp: smoke)
+                {
+                    sp.draw(canvas);
+                }
             }
             //draw missiles
             for(Missile m: missiles)

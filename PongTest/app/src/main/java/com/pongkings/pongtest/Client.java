@@ -58,6 +58,15 @@ class Input implements Runnable{
                     String split[] = message.split(":");
                     if(split[0].equals("P")){
                         if (myGamePanel.getEnemyPlayer() != null) {
+                            if(!myGamePanel.getEnemyPlayer().getPlaying() && myGamePanel.getNewEnemyCreated() && myGamePanel.getEnemyReset())
+                            {
+                                myGamePanel.getEnemyPlayer().setPlaying(true);
+                            }
+                            if(myGamePanel.getEnemyPlayer().getPlaying())
+                            {
+                                if(!myGamePanel.getEnemyStarted())myGamePanel.setEnemyStarted(true);
+                                myGamePanel.setEnemyReset(false);
+                            }
                             myGamePanel.setEnemyPlayerY(Integer.parseInt(split[1]));
                         }
                     }
